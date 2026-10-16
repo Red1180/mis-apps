@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis apps</title>
+<meta name="theme-color" content="#120a2a">
+<link rel="icon" href="colonia/icon-192.png">
+<style>
+:root{--ink:#120d22;--panel:rgba(17,13,30,.92);--line:rgba(255,255,255,.14);--soft:#efe6ff;--muted:#c9bce8;--label:#ffd98a;--gold:#f6b02c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Segoe UI','Trebuchet MS',Verdana,system-ui,sans-serif;color:#fff;
+  background:radial-gradient(circle at 20% 10%,#3b2a63 0,transparent 45%),radial-gradient(circle at 85% 80%,#1f5a4a 0,transparent 45%),#120a2a}
+main{width:min(720px,calc(100% - 32px));margin:0 auto;padding:32px 0 48px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;text-align:center;font-family:'Arial Black','Segoe UI',sans-serif;font-size:clamp(2rem,8vw,3rem);color:var(--gold);-webkit-text-stroke:1.5px var(--ink);text-shadow:0 5px 0 var(--ink)}
+.sub{margin:0;text-align:center;color:var(--muted);font-weight:700}
+.app{display:flex;gap:16px;align-items:center;padding:14px 16px;border-radius:20px;background:var(--panel);border:2px solid var(--line);color:#fff;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.4);transition:transform .1s}
+.app:hover,.app:focus-visible{transform:translateY(-3px);border-color:var(--gold);outline:none}
+.app img{width:72px;height:72px;border-radius:18px;flex-shrink:0}
+.app b{display:block;font-size:1.25rem}
+.app span{color:var(--soft);font-size:.92rem;line-height:1.4}
+.how{background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:16px 18px}
+.how h2{margin:0 0 8px;font-size:1.05rem;color:var(--label)}
+.how ol{margin:0;padding-left:1.3em;line-height:1.6;color:var(--soft)}
+.how p{margin:10px 0 0;color:var(--muted);font-size:.88rem;line-height:1.45}
+</style>
+</head>
+<body>
+<main>
+  <h1>Mis apps</h1>
+  <p class="sub">Funcionan sin internet. Tus datos se quedan en tu teléfono.</p>
+  <a class="app" href="colonia/"><img src="colonia/icon-180.png" alt=""><div><b>Colonia</b><span>Tu casa como un juego de colonias: limpieza, cocina, aseo y ejercicio con horario fijo.</span></div></a>
+  <a class="app" href="chanchito/"><img src="chanchito/icon-180.png" alt=""><div><b>Chanchito</b><span>Anota gastos, arma metas de ahorro y usa calculadoras simples.</span></div></a>
+  <a class="app" href="blackjack/"><img src="blackjack/icon-180.png" alt=""><div><b>Blackjack Brujo</b><span>Entrena el conteo de cartas, la cuenta verdadera y la estrategia básica.</span></div></a>
+  <div class="how">
+    <h2>📲 Cómo ponerlas en el iPhone</h2>
+    <ol>
+      <li>Abre esta página en <b>Safari</b>.</li>
+      <li>Toca una app para abrirla.</li>
+      <li>Toca el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li>
+      <li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li>
+      <li>Repite con las otras dos.</li>
+    </ol>
+    <p>Úsalas siempre desde el ícono: la app del ícono guarda sus datos aparte de Safari. Descarga un respaldo de vez en cuando desde los ajustes de cada app.</p>
+  </div>
+</main>
+</body>
+</html>

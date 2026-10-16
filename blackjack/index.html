@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackjack Brujo</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Blackjack">
+<meta name="theme-color" content="#150a2e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>%E2%99%A0</text></svg>">
+<style>
+/* ============ BASE ============ */
+:root{
+  --ink:#1a0f2e;
+  --cream:#fdf6e3;
+  --panel:rgba(20,11,42,.86);
+  --red:#ef5b3d;
+  --red-d:#a92f1c;
+  --gold:#f6b02c;
+  --gold-d:#b47a10;
+  --teal:#2bbfa4;
+  --teal-d:#157263;
+  --blue:#4f7ee8;
+  --blue-d:#2a4fa8;
+  --purple:#8a4fd0;
+  --purple-d:#5b2d9e;
+  --dark:#3c2a63;
+  --dark-d:#241536;
+  --good:#3ddc97;
+  --bad:#ff5d6c;
+}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  font-family:'Segoe UI','Trebuchet MS',Verdana,sans-serif;
+  overflow:hidden;color:#fff;background:#150a2e;
+}
+#bg{position:fixed;inset:0;width:100vw;height:100vh;image-rendering:pixelated;z-index:0}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 42%, transparent 34%, rgba(8,4,18,.66) 100%)}
+#crt{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.16;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0 2px, transparent 2px 4px)}
+#app{position:relative;z-index:2;height:100%;display:flex;align-items:center;justify-content:center}
+
+.screen{display:none;width:min(980px,97vw);max-height:100vh;overflow-y:auto;overflow-x:hidden;
+  padding:18px 10px;flex-direction:column;align-items:center;gap:18px}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{width:0}
+
+/* ============ TIPOGRAFIA / TITULO ============ */
+#title{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;
+  font-family:'Arial Black','Segoe UI',sans-serif;
+  font-size:clamp(2rem,7vw,4rem);font-weight:900;letter-spacing:1px;line-height:1}
+#title .letter{display:inline-block;-webkit-text-stroke:2px var(--ink);
+  text-shadow:0 5px 0 var(--ink),0 10px 20px rgba(0,0,0,.55);
+  animation:bob 2.6s ease-in-out infinite}
+#title .space{width:.45em}
+@keyframes bob{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-6px) rotate(2deg)}
+}
+.subtitle{margin:-6px 0 0;font-weight:700;color:#e8d9ff;opacity:.85;
+  text-shadow:0 2px 0 rgba(0,0,0,.5);text-align:center}
+
+h2.scr-title{margin:0;font-family:'Arial Black','Segoe UI',sans-serif;font-size:1.7rem;
+  -webkit-text-stroke:1.5px var(--ink);text-shadow:0 4px 0 var(--ink);letter-spacing:.5px}
+h3{margin:0;font-size:1.35rem;font-weight:900}
+
+/* ============ PANELES ============ */
+.panel{background:var(--panel);border:2px solid rgba(255,255,255,.14);border-radius:18px;
+  padding:22px 26px;backdrop-filter:blur(3px);
+  box-shadow:0 14px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08)}
+
+/* ============ BOTONES ============ */
+.btn{position:relative;border:none;cursor:pointer;font-family:inherit;font-weight:900;
+  letter-spacing:.5px;color:#fff;padding:.7em 1.35em;border-radius:13px;font-size:1.02rem;
+  background:var(--red);box-shadow:0 5px 0 var(--red-d),0 9px 16px rgba(0,0,0,.4);
+  text-shadow:0 2px 0 rgba(0,0,0,.35);
+  transition:transform .08s,box-shadow .08s,filter .15s}
+.btn:hover{transform:translateY(-2px) rotate(-.6deg)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--red-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.teal{background:var(--teal);box-shadow:0 5px 0 var(--teal-d),0 9px 16px rgba(0,0,0,.4)}
+.btn.teal:active{box-shadow:0 1px 0 var(--teal-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.gold{background:var(--gold);color:#3a2503;text-shadow:0 1px 0 rgba(255,255,255,.35);
+  box-shadow:0 5px 0 var(--gold-d),0 9px 16px rgba(0,0,0,.4)}
+.btn.gold:active{box-shadow:0 1px 0 var(--gold-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.blue{background:var(--blue);box-shadow:0 5px 0 var(--blue-d),0 9px 16px rgba(0,0,0,.4)}
+.btn.blue:active{box-shadow:0 1px 0 var(--blue-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.purple{background:var(--purple);box-shadow:0 5px 0 var(--purple-d),0 9px 16px rgba(0,0,0,.4)}
+.btn.purple:active{box-shadow:0 1px 0 var(--purple-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.dark{background:var(--dark);box-shadow:0 5px 0 var(--dark-d),0 9px 16px rgba(0,0,0,.4)}
+.btn.dark:active{box-shadow:0 1px 0 var(--dark-d),0 3px 8px rgba(0,0,0,.4)}
+.btn.big{font-size:1.25rem;padding:.85em 1.7em;border-radius:16px}
+.btn.sm{font-size:.86rem;padding:.5em .9em;border-radius:10px}
+.btn:disabled{filter:grayscale(.75) brightness(.65);cursor:default;transform:none}
+.btn small{display:block;font-size:.62em;font-weight:700;opacity:.8;letter-spacing:0}
+
+/* ============ CHIPS (opciones) ============ */
+.setup-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;width:100%}
+.setup-row>label{min-width:150px;font-weight:800;color:#ffd98a;text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:inherit;font-size:.95rem;padding:.42em .95em;border-radius:999px;cursor:pointer;
+  border:2px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;font-weight:800;
+  transition:transform .08s}
+.chip:hover{transform:translateY(-2px)}
+.chip.sel{background:var(--gold);color:#3a2503;border-color:rgba(255,255,255,.25);
+  box-shadow:0 3px 0 var(--gold-d)}
+input[type=range]{accent-color:var(--gold);width:190px;cursor:pointer}
+.sysdesc{font-size:.88rem;color:#cdbcf0;margin:2px 0 0;line-height:1.45}
+
+/* ============ MENU ============ */
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:min(760px,94vw)}
+@media (max-width:640px){.menu-grid{grid-template-columns:1fr}}
+.mode-card{position:relative;border:none;cursor:pointer;font-family:inherit;color:#fff;
+  text-align:left;padding:18px 20px 16px;border-radius:18px;display:flex;flex-direction:column;gap:6px;
+  box-shadow:0 6px 0 rgba(0,0,0,.35),0 14px 24px rgba(0,0,0,.45);
+  transition:transform .1s;overflow:hidden}
+.mode-card:hover{transform:translateY(-3px) rotate(-.7deg) scale(1.015)}
+.mode-card:active{transform:translateY(2px)}
+.mode-card .mc-ico{position:absolute;right:8px;top:-6px;font-size:4.4rem;opacity:.28;
+  transform:rotate(12deg);pointer-events:none}
+.mode-card .mc-t{font-size:1.28rem;font-weight:900;letter-spacing:.4px;
+  text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.mode-card .mc-d{font-size:.88rem;font-weight:600;opacity:.92;line-height:1.35;
+  text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.mc-red{background:linear-gradient(160deg,#f0603f,#c22f45)}
+.mc-teal{background:linear-gradient(160deg,#2fc9ab,#188a83)}
+.mc-blue{background:linear-gradient(160deg,#5b8bf0,#3a55c0)}
+.mc-gold{background:linear-gradient(160deg,#f6b02c,#d97e1a);color:#31200a}
+.mc-gold .mc-t,.mc-gold .mc-d{text-shadow:0 1px 0 rgba(255,255,255,.25)}
+.menu-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-size:.82rem;font-weight:700}
+.menu-stats span{background:rgba(0,0,0,.42);border:1.5px solid rgba(255,255,255,.16);
+  border-radius:999px;padding:.35em .9em;color:#e6dcff}
+.menu-foot{display:flex;gap:10px;align-items:center}
+
+/* deco cartas del menu */
+.deco{position:absolute;pointer-events:none;opacity:.9;z-index:-1}
+.deco .card{box-shadow:0 8px 16px rgba(0,0,0,.5)}
+.deco.d1{left:calc(50% - 330px);top:30px;transform:rotate(-14deg)}
+.deco.d2{right:calc(50% - 330px);top:44px;transform:rotate(13deg)}
+@media (max-width:760px){.deco{display:none}}
+
+/* ============ CARTAS ============ */
+.card-wrap{display:inline-block}
+.card-wrap.float{animation:floaty 3.2s ease-in-out infinite alternate}
+@keyframes floaty{from{transform:translateY(0) rotate(-.6deg)}to{transform:translateY(-6px) rotate(.8deg)}}
+.card{
+  --cw:118px;
+  width:var(--cw);aspect-ratio:5/7;position:relative;color:var(--sc,#2b2d42);
+  background:linear-gradient(165deg,#fffdf4 0%,#f7eed6 78%,#efe2bf 100%);
+  border:3px solid var(--dark-d);border-radius:calc(var(--cw)*.1);
+  box-shadow:0 10px 18px rgba(0,0,0,.5), inset 0 0 0 2.5px #fffef9;
+  font-size:calc(var(--cw)*.155);
+  transform:rotate(var(--tilt,0deg));
+}
+.card.deal{animation:dealIn .3s cubic-bezier(.2,.85,.3,1.25) both}
+@keyframes dealIn{
+  0%{transform:translateY(70px) rotate(14deg) scale(.45);opacity:0}
+  62%{transform:translateY(-8px) rotate(var(--tilt,0deg)) scale(1.06);opacity:1}
+  100%{transform:translateY(0) rotate(var(--tilt,0deg)) scale(1)}
+}
+.card .corner{position:absolute;font-weight:900;line-height:.92;text-align:center;letter-spacing:-.03em}
+.card .corner b{display:block;font-size:1.15em}
+.card .corner span{display:block;font-size:1em}
+.card .tl{top:.35em;left:.42em}
+.card .br{bottom:.35em;right:.42em;transform:rotate(180deg)}
+.card .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:-.2em}
+.card .mid b{font-size:2.15em;font-weight:900;letter-spacing:-.04em;text-shadow:0 2px 0 rgba(0,0,0,.12)}
+.card .mid span{font-size:1.7em;margin-top:-.28em}
+.suit-h{--sc:#e33d4c}
+.suit-d{--sc:#f2790a}
+.suit-s{--sc:#28283f}
+.suit-c{--sc:#2160c4}
+.card.back{background:repeating-linear-gradient(45deg,#6a35b5 0 9px,#54289b 9px 18px);
+  border-color:var(--dark-d)}
+.card.back::after{content:'★';position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:2.4em;color:rgba(255,255,255,.35)}
+.card.small{--cw:88px}
+
+/* ============ PANTALLA DE JUEGO ============ */
+#scr-play{gap:12px}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:10px;width:min(880px,96vw);flex-wrap:wrap}
+.hud-mid{text-align:center;flex:1;min-width:150px}
+.hud-big{font-size:1.5rem;font-weight:900;text-shadow:0 3px 0 rgba(0,0,0,.55);letter-spacing:1px}
+.hud-sub{font-size:.85rem;font-weight:700;color:#d9c9ff;text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.hud-right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#stage-zone{width:min(880px,96vw);min-height:340px;border-radius:26px;cursor:pointer;
+  background:rgba(10,20,16,.5);border:3px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 0 60px rgba(0,0,0,.5),0 16px 30px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+#stage{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:190px}
+#stage-hint{font-weight:800;color:#ffe9b0;text-shadow:0 2px 0 rgba(0,0,0,.6);font-size:1.05rem;
+  text-align:center;min-height:1.4em}
+
+/* ============ OVERLAY ============ */
+#overlay{position:fixed;inset:0;z-index:5;display:none;align-items:center;justify-content:center;
+  background:rgba(8,4,18,.6);backdrop-filter:blur(3px)}
+#overlay.show{display:flex}
+#ov-box{min-width:min(430px,92vw);max-width:94vw;text-align:center;display:flex;
+  flex-direction:column;gap:16px;align-items:center;animation:popIn .22s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes popIn{from{transform:scale(.7) rotate(-2deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+#ov-box p{margin:0;font-weight:700;color:#e6dcff}
+input.num{font-family:inherit;font-size:2rem;font-weight:900;width:150px;text-align:center;
+  background:#1d1140;border:3px solid var(--purple-d);border-radius:12px;color:#fff;padding:.25em;
+  -webkit-user-select:text;user-select:text}
+input.num:focus{outline:none;border-color:var(--gold)}
+.ov-verdict{font-size:2.1rem;font-weight:900;-webkit-text-stroke:1px var(--ink);
+  text-shadow:0 4px 0 rgba(0,0,0,.45)}
+.ov-verdict.good{color:var(--good)}
+.ov-verdict.bad{color:var(--bad)}
+.rlines{width:100%;display:flex;flex-direction:column;gap:6px}
+.rline{display:flex;justify-content:space-between;gap:20px;font-weight:700;font-size:.98rem;
+  background:rgba(255,255,255,.06);border-radius:10px;padding:.45em .9em}
+.rline b{color:#ffd98a}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ============ BADGES / TOAST ============ */
+#peek-badge{position:fixed;top:14vh;left:50%;transform:translateX(-50%) scale(.7);z-index:6;
+  pointer-events:none;opacity:0;transition:opacity .15s,transform .15s;
+  background:var(--ink);border:3px solid var(--gold);border-radius:16px;padding:.4em 1.1em;
+  font-size:1.7rem;font-weight:900;color:#ffd98a;box-shadow:0 10px 24px rgba(0,0,0,.6)}
+#peek-badge.show{opacity:1;transform:translateX(-50%) scale(1)}
+#toast{position:fixed;bottom:5vh;left:50%;transform:translateX(-50%) translateY(20px);z-index:6;
+  pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;
+  background:rgba(20,11,42,.95);border:2px solid rgba(255,255,255,.25);border-radius:12px;
+  padding:.55em 1.2em;font-weight:800;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ CUENTA VERDADERA ============ */
+#scr-tc .panel{width:min(640px,94vw);display:flex;flex-direction:column;gap:18px;align-items:center}
+.tc-top{display:flex;justify-content:space-between;width:100%;align-items:center;gap:10px;flex-wrap:wrap}
+.scorechips{display:flex;gap:8px;flex-wrap:wrap}
+.scorechip{background:rgba(0,0,0,.45);border:2px solid var(--gold);border-radius:999px;
+  padding:.3em .9em;font-weight:900;color:#ffd98a;font-size:.9rem}
+.tc-displays{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;width:100%}
+.tc-block{flex:1;min-width:200px;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.14);
+  border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.tc-block .lbl{font-size:.82rem;font-weight:800;letter-spacing:1px;color:#cdbcf0;text-transform:uppercase}
+.tc-block .val{font-size:2.6rem;font-weight:900;-webkit-text-stroke:1px var(--ink);
+  text-shadow:0 4px 0 rgba(0,0,0,.4)}
+#tc-rc{color:#ffd98a}
+#tc-decks{color:#9fe8dc;font-size:1.7rem}
+#tc-deckviz{display:flex;gap:5px;align-items:flex-end;min-height:40px}
+.mini-deck{width:24px;height:34px;border-radius:4px;border:2px solid var(--dark-d);
+  background:linear-gradient(#6a35b5,#4a2384);box-shadow:0 2px 0 var(--dark-d)}
+.mini-deck.half{height:19px;opacity:.85}
+.tc-q{font-weight:900;font-size:1.15rem;color:#fff}
+#tc-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+@media (max-width:520px){#tc-opts{grid-template-columns:repeat(2,1fr)}}
+.opt{font-size:1.3rem}
+.opt.good{background:var(--good) !important;color:#0b3323;
+  box-shadow:0 5px 0 #1d9463,0 9px 16px rgba(0,0,0,.4) !important}
+.opt.badx{background:#8d2635 !important;box-shadow:0 5px 0 #571620,0 9px 16px rgba(0,0,0,.4) !important;
+  animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ============ ESTRATEGIA ============ */
+#scr-strat .panel{width:min(700px,95vw);display:flex;flex-direction:column;gap:14px;align-items:center}
+.st-zone{display:flex;flex-direction:column;align-items:center;gap:4px}
+.st-lbl{font-size:.8rem;font-weight:900;letter-spacing:2px;color:#cdbcf0;text-transform:uppercase;
+  text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.st-cards{display:flex;gap:12px;justify-content:center;min-height:130px;align-items:center}
+#st-feedback{min-height:2.6em;display:flex;align-items:center;text-align:center;font-weight:800;
+  font-size:1.02rem;line-height:1.3}
+#st-feedback.good{color:var(--good)}
+#st-feedback.bad{color:var(--bad)}
+#st-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+@media (max-width:560px){#st-actions{grid-template-columns:repeat(2,1fr)}}
+
+.backrow{display:flex;justify-content:flex-start;width:min(880px,96vw)}
+.setup-panel{width:min(720px,95vw);display:flex;flex-direction:column;gap:16px}
+.setup-actions{display:flex;gap:12px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+
+/* ============ TUTORIAL ============ */
+.mc-purple{background:linear-gradient(160deg,#9a5ce0,#6428ad)}
+.mode-card.mc-wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:16px}
+.mode-card.mc-wide .mc-ico{position:static;font-size:2.3rem;opacity:1;transform:rotate(-8deg)}
+.mc-txt{display:flex;flex-direction:column;gap:4px}
+#scr-tut .panel{width:min(780px,96vw);display:flex;flex-direction:column;gap:14px}
+#tut-body{min-height:340px;display:flex;flex-direction:column;gap:12px}
+.tut-step{display:flex;flex-direction:column;gap:12px}
+.tut-step h3{color:#ffd98a;font-size:1.35rem;-webkit-text-stroke:.5px var(--ink)}
+#tut-body p{margin:0;line-height:1.55;color:#efe6ff;font-size:.98rem}
+#tut-body p b, #tut-body li b{color:#ffd98a}
+#tut-body ul{margin:0;padding-left:1.25em}
+#tut-body li{margin:5px 0;line-height:1.5;color:#efe6ff;font-size:.96rem}
+.valrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.valrow .cards{display:flex;gap:6px}
+.card.tiny{--cw:52px;border-width:2px;box-shadow:0 4px 8px rgba(0,0,0,.4),inset 0 0 0 1.5px #fffef9}
+.card.tiny .corner{display:none}
+.valbadge{font-size:1.4rem;font-weight:900;border-radius:10px;padding:.1em .45em;min-width:2em;text-align:center}
+.valbadge.plus{background:rgba(61,220,151,.16);color:var(--good);border:2px solid var(--good)}
+.valbadge.zero{background:rgba(255,255,255,.1);color:#cbc3dd;border:2px solid #8d84a5}
+.valbadge.minus{background:rgba(255,93,108,.14);color:var(--bad);border:2px solid var(--bad)}
+.valnote{font-size:.85rem;color:#cdbcf0;flex:1;min-width:150px;line-height:1.4}
+.tut-nav{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tut-dots{display:flex;gap:7px}
+.dot{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;
+  transition:background .2s,transform .2s}
+.dot.on{background:var(--gold);transform:scale(1.3)}
+.prac-zone{display:flex;flex-direction:column;align-items:center;gap:10px}
+.prac-row{display:flex;gap:10px}
+#tut-prac-fb{min-height:1.5em;font-weight:800;text-align:center}
+.prac-count{font-weight:900;color:#9fe8dc}
+.tcmp{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.tcmp .tcase{flex:1;min-width:210px;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.14);
+  border-radius:14px;padding:14px;text-align:center;font-weight:700;line-height:1.5}
+.tcase .big{font-size:1.35rem;font-weight:900;display:block;color:#ffd98a}
+.tcase small{color:#cdbcf0}
+.ctrl-table{width:100%;display:flex;flex-direction:column;gap:6px}
+.ctrl-row{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.06);border-radius:10px;
+  padding:.5em .85em;font-size:.94rem}
+.kbd{background:#1d1140;border:2px solid var(--purple-d);border-bottom-width:4px;border-radius:8px;
+  padding:.15em .6em;font-weight:900;font-size:.85rem;white-space:nowrap;min-width:5.5em;text-align:center}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+  .card,.card-wrap{opacity:1 !important}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="vignette"></div>
+<div id="crt"></div>
+
+<div id="app">
+
+  <!-- ================= MENU ================= -->
+  <section id="scr-menu" class="screen">
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="deco d1"><div class="card small suit-h" style="--tilt:-14deg">
+        <div class="corner tl"><b>A</b><span>♥</span></div><div class="mid"><b>A</b><span>♥</span></div><div class="corner br"><b>A</b><span>♥</span></div>
+      </div></div>
+      <div class="deco d2"><div class="card small suit-s" style="--tilt:13deg">
+        <div class="corner tl"><b>K</b><span>♠</span></div><div class="mid"><b>K</b><span>♠</span></div><div class="corner br"><b>K</b><span>♠</span></div>
+      </div></div>
+      <h1 id="title"></h1>
+      <p class="subtitle">Entrena tu conteo de cartas para blackjack</p>
+    </div>
+
+    <div class="menu-grid">
+      <button class="mode-card mc-purple mc-wide" data-go="tut">
+        <span class="mc-ico">🎓</span>
+        <span class="mc-txt">
+          <span class="mc-t">¿Cómo se juega? Empieza aquí</span>
+          <span class="mc-d">Tutorial de 7 pasos: qué es contar cartas, el sistema Hi-Lo con práctica incluida, y el plan para entrenar con la app.</span>
+        </span>
+      </button>
+      <button class="mode-card mc-red" data-go="drill-setup">
+        <span class="mc-ico">♥</span>
+        <span class="mc-t">Conteo Continuo</span>
+        <span class="mc-d">Las cartas salen solas al ritmo que elijas. Lleva la cuenta y compruébala al final.</span>
+      </button>
+      <button class="mode-card mc-teal" data-go="cd-setup">
+        <span class="mc-ico">♠</span>
+        <span class="mc-t">Countdown</span>
+        <span class="mc-d">Cuenta el mazo entero a tu ritmo, contra el reloj. El clásico para ganar velocidad.</span>
+      </button>
+      <button class="mode-card mc-blue" data-go="tc">
+        <span class="mc-ico">♦</span>
+        <span class="mc-t">Cuenta Verdadera</span>
+        <span class="mc-d">Convierte cuenta corrida en cuenta verdadera dividiendo por los mazos que quedan.</span>
+      </button>
+      <button class="mode-card mc-gold" data-go="strat">
+        <span class="mc-ico">♣</span>
+        <span class="mc-t">Estrategia Básica</span>
+        <span class="mc-d">Te reparto una mano y decides: pedir, plantarse, doblar o dividir.</span>
+      </button>
+    </div>
+
+    <div id="menu-stats" class="menu-stats"></div>
+    <div class="menu-foot">
+      <button class="btn sm dark snd-btn" title="Sonido">🔊</button>
+    </div>
+  </section>
+
+  <!-- ================= SETUP: CONTEO CONTINUO ================= -->
+  <section id="scr-drill-setup" class="screen">
+    <h2 class="scr-title">Conteo Continuo</h2>
+    <div class="panel setup-panel">
+      <div class="setup-row"><label>Mazos</label>
+        <div class="chips" data-cfg="drill" data-key="decks">
+          <button type="button" class="chip" data-v="1">1</button>
+          <button type="button" class="chip sel" data-v="2">2</button>
+          <button type="button" class="chip" data-v="4">4</button>
+          <button type="button" class="chip" data-v="6">6</button>
+          <button type="button" class="chip" data-v="8">8</button>
+        </div>
+      </div>
+      <div class="setup-row"><label>Velocidad</label>
+        <input type="range" id="speed-range" min="300" max="3000" step="100" value="1000">
+        <span id="speed-label" style="font-weight:900;color:#ffd98a">1.0 s por tirada</span>
+      </div>
+      <div class="setup-row"><label>Cartas por tirada</label>
+        <div class="chips" data-cfg="drill" data-key="per">
+          <button type="button" class="chip sel" data-v="1">1</button>
+          <button type="button" class="chip" data-v="2">2</button>
+          <button type="button" class="chip" data-v="3">3</button>
+        </div>
+      </div>
+      <div class="setup-row"><label>Sistema</label>
+        <div class="chips" data-cfg="drill" data-key="sys">
+          <button type="button" class="chip sel" data-v='"hilo"'>Hi-Lo</button>
+          <button type="button" class="chip" data-v='"ko"'>KO</button>
+          <button type="button" class="chip" data-v='"omega2"'>Omega II</button>
+        </div>
+      </div>
+      <p class="sysdesc" id="drill-sysdesc"></p>
+      <div class="setup-row"><label>Quiz sorpresa</label>
+        <div class="chips" data-cfg="drill" data-key="quiz">
+          <button type="button" class="chip sel" data-v="true">Sí, pregúntame de repente</button>
+          <button type="button" class="chip" data-v="false">No, solo al final</button>
+        </div>
+      </div>
+      <div class="setup-actions">
+        <button class="btn dark" data-go="menu">Volver</button>
+        <button class="btn gold big" id="btn-drill-start">¡Repartir!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SETUP: COUNTDOWN ================= -->
+  <section id="scr-cd-setup" class="screen">
+    <h2 class="scr-title">Countdown de Mazo</h2>
+    <div class="panel setup-panel">
+      <p class="sysdesc" style="margin:0">Pasa el mazo completo lo más rápido que puedas llevando la cuenta.
+      Avanzas con ESPACIO o tocando la mesa. Al final dices la cuenta y vemos el tiempo.
+      El mejor tiempo solo cuenta si aciertas sin mirar la cuenta.</p>
+      <div class="setup-row"><label>Mazos</label>
+        <div class="chips" data-cfg="cd" data-key="decks">
+          <button type="button" class="chip sel" data-v="1">1</button>
+          <button type="button" class="chip" data-v="2">2</button>
+        </div>
+      </div>
+      <div class="setup-row"><label>Cartas por tirada</label>
+        <div class="chips" data-cfg="cd" data-key="per">
+          <button type="button" class="chip sel" data-v="1">1</button>
+          <button type="button" class="chip" data-v="2">2</button>
+        </div>
+      </div>
+      <div class="setup-row"><label>Sistema</label>
+        <div class="chips" data-cfg="cd" data-key="sys">
+          <button type="button" class="chip sel" data-v='"hilo"'>Hi-Lo</button>
+          <button type="button" class="chip" data-v='"ko"'>KO</button>
+          <button type="button" class="chip" data-v='"omega2"'>Omega II</button>
+        </div>
+      </div>
+      <p class="sysdesc" id="cd-sysdesc"></p>
+      <div class="setup-actions">
+        <button class="btn dark" data-go="menu">Volver</button>
+        <button class="btn teal big" id="btn-cd-start">¡A contar!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MESA DE JUEGO ================= -->
+  <section id="scr-play" class="screen">
+    <div class="hud">
+      <button id="btn-quit" class="btn sm dark">Salir</button>
+      <div class="hud-mid">
+        <div id="hud-progress" class="hud-big">0 / 0</div>
+        <div id="hud-decks" class="hud-sub"></div>
+        <div id="hud-timer" class="hud-sub" style="font-size:1.05rem;color:#9fe8dc"></div>
+      </div>
+      <div class="hud-right">
+        <button id="btn-peek" class="btn sm purple">Ver cuenta <small>tecla V</small></button>
+        <button id="btn-pause" class="btn sm teal">Pausa</button>
+        <button class="btn sm dark snd-btn" title="Sonido">🔊</button>
+      </div>
+    </div>
+    <div id="stage-zone">
+      <div id="stage"></div>
+      <div id="stage-hint"></div>
+    </div>
+  </section>
+
+  <!-- ================= CUENTA VERDADERA ================= -->
+  <section id="scr-tc" class="screen">
+    <div class="backrow"><button class="btn sm dark" data-go="menu">Volver</button></div>
+    <h2 class="scr-title">Cuenta Verdadera</h2>
+    <div class="panel">
+      <div class="tc-top">
+        <span class="tc-q">Divide y redondea al entero más cercano</span>
+        <div class="scorechips">
+          <span class="scorechip" id="tc-score">Puntos 0</span>
+          <span class="scorechip" id="tc-streak">Racha x0</span>
+        </div>
+      </div>
+      <div class="tc-displays">
+        <div class="tc-block">
+          <span class="lbl">Cuenta corrida</span>
+          <span class="val" id="tc-rc">+0</span>
+        </div>
+        <div class="tc-block">
+          <span class="lbl">Mazos restantes</span>
+          <span class="val" id="tc-decks">0</span>
+          <div id="tc-deckviz"></div>
+        </div>
+      </div>
+      <div id="tc-opts">
+        <button class="btn blue opt" data-i="0">+0</button>
+        <button class="btn blue opt" data-i="1">+0</button>
+        <button class="btn blue opt" data-i="2">+0</button>
+        <button class="btn blue opt" data-i="3">+0</button>
+      </div>
+      <p class="sysdesc" style="margin:0;text-align:center">Teclas 1 a 4 para responder rápido</p>
+    </div>
+  </section>
+
+  <!-- ================= ESTRATEGIA ================= -->
+  <section id="scr-strat" class="screen">
+    <div class="backrow"><button class="btn sm dark" data-go="menu">Volver</button></div>
+    <h2 class="scr-title">Estrategia Básica</h2>
+    <div class="panel">
+      <div class="tc-top">
+        <span class="tc-q">6 mazos · se planta con 17 suave · doblar tras dividir permitido</span>
+        <div class="scorechips">
+          <span class="scorechip" id="st-score">Aciertos 0/0</span>
+          <span class="scorechip" id="st-streak">Racha x0</span>
+        </div>
+      </div>
+      <div class="st-zone">
+        <span class="st-lbl">Banca</span>
+        <div class="st-cards" id="st-dealer"></div>
+      </div>
+      <div class="st-zone">
+        <span class="st-lbl">Tu mano</span>
+        <div class="st-cards" id="st-player"></div>
+      </div>
+      <div id="st-feedback"></div>
+      <div id="st-actions">
+        <button class="btn teal" data-a="H">PEDIR <small>1</small></button>
+        <button class="btn" data-a="S">PLANTARSE <small>2</small></button>
+        <button class="btn gold" data-a="D">DOBLAR <small>3</small></button>
+        <button class="btn purple" data-a="P">DIVIDIR <small>4</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TUTORIAL ================= -->
+  <section id="scr-tut" class="screen">
+    <div class="backrow"><button class="btn sm dark" data-go="menu">Volver</button></div>
+    <h2 class="scr-title">¿Cómo se juega?</h2>
+    <div class="panel">
+      <div id="tut-body"></div>
+      <div class="tut-nav">
+        <button class="btn dark" id="tut-prev">Anterior</button>
+        <div class="tut-dots" id="tut-dots"></div>
+        <button class="btn gold" id="tut-next">Siguiente</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="overlay"><form id="ov-box" class="panel" autocomplete="off"></form></div>
+<div id="peek-badge"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ==================== UTILES ==================== */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rnd  = n => Math.floor(Math.random()*n);
+const pick = a => a[rnd(a.length)];
+const fmt  = v => (v>0?'+':'')+v;
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SUITS = ['♠','♥','♦','♣'];
+const SUIT_CLASS = {'♠':'s','♥':'h','♦':'d','♣':'c'};
+
+/* ==================== SISTEMAS DE CONTEO ==================== */
+const SYSTEMS = {
+  hilo:{ name:'Hi-Lo', balanced:true,
+    vals:{'A':-1,'2':1,'3':1,'4':1,'5':1,'6':1,'7':0,'8':0,'9':0,'10':-1,'J':-1,'Q':-1,'K':-1},
+    desc:'Hi-Lo: del 2 al 6 suman 1; el 7, 8 y 9 valen 0; el 10, las figuras y el As restan 1. Un mazo completo termina en 0.' },
+  ko:{ name:'KO', balanced:false, irc:d=>4-4*d,
+    vals:{'A':-1,'2':1,'3':1,'4':1,'5':1,'6':1,'7':1,'8':0,'9':0,'10':-1,'J':-1,'Q':-1,'K':-1},
+    desc:'KO: del 2 al 7 suman 1; el 8 y 9 valen 0; el 10, las figuras y el As restan 1. Es desbalanceado: arrancas en 4 menos 4 por cada mazo, y el final siempre es +4.' },
+  omega2:{ name:'Omega II', balanced:true,
+    vals:{'A':0,'2':1,'3':1,'4':2,'5':2,'6':2,'7':1,'8':0,'9':-1,'10':-2,'J':-2,'Q':-2,'K':-2},
+    desc:'Omega II: el 2, 3 y 7 suman 1; el 4, 5 y 6 suman 2; el 9 resta 1; el 10 y las figuras restan 2; el 8 y el As valen 0. Nivel avanzado.' }
+};
+
+function buildShoe(decks){
+  const s = [];
+  for(let d=0; d<decks; d++)
+    for(const suit of SUITS)
+      for(const rank of RANKS)
+        s.push({rank, suit});
+  return shuffleArr(s);
+}
+
+/* ==================== SONIDO ==================== */
+const Snd = {
+  muted: false, ctx: null,
+  ensure(){
+    if(!this.ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return false;
+      this.ctx = new AC();
+    }
+    if(this.ctx.state === 'suspended') this.ctx.resume();
+    return true;
+  },
+  tone(freq, dur, type, vol, when){
+    if(this.muted || !this.ensure()) return;
+    const t = this.ctx.currentTime + (when||0);
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type || 'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.1, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  },
+  deal(){
+    if(this.muted || !this.ensure()) return;
+    const len = Math.floor(this.ctx.sampleRate * 0.05);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const f = this.ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value = 1100 + rnd(700);
+    const g = this.ctx.createGain(); g.gain.value = 0.22;
+    src.connect(f); f.connect(g); g.connect(this.ctx.destination);
+    src.start();
+  },
+  ok(){ this.tone(660,.1,'square',.09); this.tone(990,.14,'square',.09,.09); },
+  bad(){ this.tone(170,.22,'sawtooth',.12); },
+  click(){ this.tone(520,.045,'triangle',.07); }
+};
+try{ Snd.muted = localStorage.getItem('bb_mute') === '1'; }catch(e){}
+function updSndBtns(){ $$('.snd-btn').forEach(b => b.textContent = Snd.muted ? '🔇' : '🔊'); }
+$$('.snd-btn').forEach(b => b.addEventListener('click', () => {
+  Snd.muted = !Snd.muted;
+  try{ localStorage.setItem('bb_mute', Snd.muted ? '1' : '0'); }catch(e){}
+  updSndBtns(); if(!Snd.muted) Snd.click();
+}));
+document.addEventListener('pointerdown', () => Snd.ensure(), {once:true});
+
+/* ==================== ESTADISTICAS ==================== */
+function defStats(){ return {
+  drill:{n:0,ok:0},
+  cd:{n:0,ok:0,best:{}},
+  tc:{n:0,ok:0,best:0},
+  st:{n:0,ok:0,best:0}
+};}
+const Stats = {
+  data: (function(){
+    const base = defStats();
+    try{
+      const d = JSON.parse(localStorage.getItem('bb_stats') || 'null');
+      if(d) for(const k of Object.keys(base)) Object.assign(base[k], d[k] || {});
+    }catch(e){}
+    return base;
+  })(),
+  save(){ try{ localStorage.setItem('bb_stats', JSON.stringify(this.data)); }catch(e){} }
+};
+function renderMenuStats(){
+  const d = Stats.data;
+  const pct = o => o.n ? Math.round(100*o.ok/o.n)+'%' : '--';
+  const bests = Object.values(d.cd.best);
+  const cdBest = bests.length ? Math.min(...bests).toFixed(1)+' s' : '--';
+  $('#menu-stats').innerHTML =
+    `<span>Conteo: ${pct(d.drill)} de ${d.drill.n}</span>`+
+    `<span>Countdown récord: ${cdBest}</span>`+
+    `<span>Cuenta verdadera: ${pct(d.tc)} · racha top ${d.tc.best}</span>`+
+    `<span>Estrategia: ${pct(d.st)} · racha top ${d.st.best}</span>`;
+}
+
+/* ==================== PANTALLAS ==================== */
+const State = { screen:'menu' };
+function go(id){
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#scr-'+id).classList.add('active');
+  State.screen = id;
+  if(id === 'menu') renderMenuStats();
+}
+$$('[data-go]').forEach(b => b.addEventListener('click', () => {
+  Snd.click();
+  const dest = b.dataset.go;
+  if(dest === 'tc'){ TC.start(); return; }
+  if(dest === 'strat'){ ST.start(); return; }
+  if(dest === 'tut'){ TUT.start(); return; }
+  if(State.screen === 'play') Game.stopTimers();
+  go(dest);
+}));
+
+/* ==================== TITULO ==================== */
+(function(){
+  const LCOLORS = ['#f6b02c','#ef5b3d','#35c4a5','#5b8bf0','#c664e8'];
+  const tEl = $('#title');
+  [...'BLACKJACK BRUJO'].forEach((ch,i) => {
+    const sp = document.createElement('span');
+    if(ch === ' '){ sp.className = 'space'; }
+    else{
+      sp.className = 'letter';
+      sp.textContent = ch;
+      sp.style.color = LCOLORS[i % LCOLORS.length];
+      sp.style.animationDelay = (-i*0.13)+'s';
+    }
+    tEl.appendChild(sp);
+  });
+})();
+
+/* ==================== CARTAS DOM ==================== */
+function makeCard(rank, suit, opts){
+  opts = opts || {};
+  const wrap = document.createElement('div');
+  wrap.className = 'card-wrap' + (opts.float === false ? '' : ' float');
+  wrap.style.animationDelay = (-Math.random()*3).toFixed(2)+'s';
+  const c = document.createElement('div');
+  c.className = 'card deal' + (opts.back ? ' back' : ' suit-'+SUIT_CLASS[suit]) + (opts.small ? ' small' : '');
+  c.style.setProperty('--tilt', (opts.tilt != null ? opts.tilt : (Math.random()*6-3)).toFixed(1)+'deg');
+  if(opts.delay) c.style.animationDelay = opts.delay+'ms';
+  if(!opts.back){
+    c.innerHTML =
+      `<div class="corner tl"><b>${rank}</b><span>${suit}</span></div>`+
+      `<div class="mid"><b>${rank}</b><span>${suit}</span></div>`+
+      `<div class="corner br"><b>${rank}</b><span>${suit}</span></div>`;
+  }
+  wrap.appendChild(c);
+  return wrap;
+}
+
+/* ==================== OVERLAY ==================== */
+let ovCb = null;
+function overlay(html, cb){
+  const box = $('#ov-box');
+  box.innerHTML = html;
+  ovCb = cb || null;
+  $('#overlay').classList.add('show');
+  const inp = box.querySelector('input');
+  if(inp) setTimeout(() => inp.focus(), 60);
+  return box;
+}
+function closeOverlay(){ $('#overlay').classList.remove('show'); ovCb = null; }
+$('#ov-box').addEventListener('submit', e => {
+  e.preventDefault();
+  if(ovCb) ovCb(new FormData(e.target));
+});
+function feedbackOverlay(ok, text, then){
+  ovCb = null;
+  $('#ov-box').innerHTML = `<div class="ov-verdict ${ok?'good':'bad'}">${ok ? '¡Correcto!' : text}</div>`;
+  Snd[ok ? 'ok' : 'bad']();
+  setTimeout(() => { closeOverlay(); if(then) then(); }, ok ? 850 : 1400);
+}
+
+/* ==================== BADGES ==================== */
+let peekTmr = null, toastTmr = null;
+function showPeek(text){
+  const el = $('#peek-badge');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(peekTmr);
+  peekTmr = setTimeout(() => el.classList.remove('show'), 1300);
+}
+function toast(text){
+  const el = $('#toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ==================== CONFIGS + CHIPS ==================== */
+const CFGS = {
+  drill:{ decks:2, ms:1000, per:1, sys:'hilo', quiz:true },
+  cd:{ decks:1, per:1, sys:'hilo' }
+};
+$$('.chips').forEach(g => {
+  g.addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if(!c) return;
+    g.querySelectorAll('.chip').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    CFGS[g.dataset.cfg][g.dataset.key] = JSON.parse(c.dataset.v);
+    if(g.dataset.key === 'sys') updateSysDescs();
+    Snd.click();
+  });
+});
+$('#speed-range').addEventListener('input', e => {
+  CFGS.drill.ms = +e.target.value;
+  $('#speed-label').textContent = (CFGS.drill.ms/1000).toFixed(1)+' s por tirada';
+});
+function updateSysDescs(){
+  $('#drill-sysdesc').textContent = SYSTEMS[CFGS.drill.sys].desc;
+  $('#cd-sysdesc').textContent = SYSTEMS[CFGS.cd.sys].desc;
+}
+updateSysDescs();
+
+/* ==================== JUEGO (conteo continuo + countdown) ==================== */
+const Game = {
+  cfg:null, auto:true, shoe:[], idx:0, rc:0,
+  tmr:null, clockIv:null, paused:false, over:false, started:false,
+  peeks:0, qN:0, qOk:0, nextQ:Infinity, t0:0, elapsed:0,
+
+  begin(cfg, auto){
+    this.cfg = Object.assign({}, cfg);
+    this.auto = auto;
+    this.shoe = buildShoe(this.cfg.decks);
+    this.idx = 0;
+    const sys = SYSTEMS[this.cfg.sys];
+    this.rc = sys.balanced ? 0 : sys.irc(this.cfg.decks);
+    this.paused = false; this.over = false; this.started = false;
+    this.peeks = 0; this.qN = 0; this.qOk = 0; this.elapsed = 0;
+    this.nextQ = (auto && this.cfg.quiz) ? 12 + rnd(12) : Infinity;
+    this.stopTimers();
+    $('#stage').innerHTML = '';
+    $('#hud-timer').textContent = auto ? '' : '0.0 s';
+    $('#hud-timer').style.display = auto ? 'none' : '';
+    $('#btn-pause').style.display = auto ? '' : 'none';
+    $('#btn-pause').textContent = 'Pausa';
+    $('#stage-hint').textContent = auto
+      ? 'Prepárate, ahí vienen...'
+      : 'Toca la mesa o pulsa ESPACIO para arrancar el reloj';
+    if(!sys.balanced) toast(`Sistema ${sys.name}: la cuenta arranca en ${fmt(this.rc)}`);
+    this.updateHUD();
+    go('play');
+    if(auto) this.tmr = setTimeout(() => this.deal(), 900);
+  },
+
+  stopTimers(){ clearTimeout(this.tmr); clearInterval(this.clockIv); },
+
+  schedule(){
+    clearTimeout(this.tmr);
+    this.tmr = setTimeout(() => {
+      if(!this.paused && !this.over) this.deal();
+    }, this.cfg.ms);
+  },
+
+  deal(){
+    if(this.over) return;
+    if(!this.started){
+      this.started = true;
+      this.t0 = performance.now();
+      if(!this.auto){
+        this.clockIv = setInterval(() => {
+          $('#hud-timer').textContent = ((performance.now()-this.t0)/1000).toFixed(1)+' s';
+        }, 100);
+        $('#stage-hint').textContent = 'ESPACIO o clic para la siguiente';
+      } else {
+        $('#stage-hint').textContent = '';
+      }
+    }
+    const n = Math.min(this.cfg.per, this.shoe.length - this.idx);
+    if(n <= 0) return;
+    const cards = this.shoe.slice(this.idx, this.idx + n);
+    this.idx += n;
+    const vals = SYSTEMS[this.cfg.sys].vals;
+    for(const c of cards) this.rc += vals[c.rank];
+    this.renderStage(cards);
+    Snd.deal();
+    this.updateHUD();
+    if(this.idx >= this.shoe.length){
+      this.over = true;
+      this.stopTimers();
+      this.elapsed = (performance.now() - this.t0) / 1000;
+      setTimeout(() => this.askFinal(), 750);
+      return;
+    }
+    if(this.auto){
+      if(this.idx >= this.nextQ) this.askQuiz();
+      else this.schedule();
+    }
+  },
+
+  renderStage(cards){
+    const st = $('#stage');
+    st.innerHTML = '';
+    cards.forEach((c,i) => {
+      const tilt = (i - (cards.length-1)/2) * 7 + (Math.random()*4 - 2);
+      st.appendChild(makeCard(c.rank, c.suit, {tilt, delay:i*70}));
+    });
+  },
+
+  updateHUD(){
+    $('#hud-progress').textContent = `${this.idx} / ${this.shoe.length}`;
+    const rem = (this.shoe.length - this.idx) / 52;
+    $('#hud-decks').textContent = 'Quedan ~' + (Math.round(rem*2)/2).toFixed(1) + ' mazos';
+  },
+
+  togglePause(){
+    if(!this.auto || this.over || !this.started) return;
+    if($('#overlay').classList.contains('show')) return;
+    this.paused = !this.paused;
+    $('#btn-pause').textContent = this.paused ? 'Seguir' : 'Pausa';
+    if(this.paused){
+      clearTimeout(this.tmr);
+      $('#stage-hint').textContent = 'En pausa';
+    } else {
+      $('#stage-hint').textContent = '';
+      this.schedule();
+    }
+  },
+
+  peek(){
+    if(this.over) return;
+    this.peeks++;
+    showPeek('Cuenta: ' + fmt(this.rc));
+  },
+
+  quit(){
+    this.stopTimers();
+    this.over = true;
+    closeOverlay();
+    go('menu');
+  },
+
+  askQuiz(){
+    clearTimeout(this.tmr);
+    overlay(
+      `<h3>Quiz sorpresa</h3>
+       <p>¿Cómo va la cuenta ahora mismo?</p>
+       <input class="num" name="ans" type="number" step="1" required>
+       <button class="btn gold" type="submit">Responder</button>`,
+      fd => {
+        const v = parseInt(fd.get('ans'), 10);
+        this.qN++;
+        const ok = v === this.rc;
+        if(ok) this.qOk++;
+        feedbackOverlay(ok, 'Era ' + fmt(this.rc), () => {
+          this.nextQ = this.idx + 12 + rnd(14);
+          if(!this.paused && !this.over) this.schedule();
+        });
+      }
+    );
+  },
+
+  askFinal(){
+    overlay(
+      `<h3>${this.auto ? 'Fin de la sesión' : '¡Mazo terminado!'}</h3>
+       <p>¿Cuál es la cuenta final?</p>
+       <input class="num" name="final" type="number" step="1" required>
+       <button class="btn gold" type="submit">Comprobar</button>`,
+      fd => {
+        const v = parseInt(fd.get('final'), 10);
+        this.showResult(v, v === this.rc);
+      }
+    );
+  },
+
+  showResult(guess, ok){
+    const cps = this.elapsed > 0 ? (this.shoe.length / this.elapsed).toFixed(1) : '0';
+    let bestLine = '';
+    if(this.auto){
+      Stats.data.drill.n++;
+      if(ok) Stats.data.drill.ok++;
+    } else {
+      Stats.data.cd.n++;
+      if(ok) Stats.data.cd.ok++;
+      const key = `${this.cfg.sys}_${this.cfg.decks}_${this.cfg.per}`;
+      const prev = Stats.data.cd.best[key];
+      if(ok && this.peeks === 0){
+        if(prev == null || this.elapsed < prev){
+          Stats.data.cd.best[key] = Math.round(this.elapsed*10)/10;
+          bestLine = `<div class="rline"><span>🏆 ¡Nuevo récord!</span><b>${this.elapsed.toFixed(1)} s</b></div>`;
+        } else {
+          bestLine = `<div class="rline"><span>Tu récord</span><b>${prev.toFixed(1)} s</b></div>`;
+        }
+      } else if(prev != null){
+        bestLine = `<div class="rline"><span>Tu récord</span><b>${prev.toFixed(1)} s</b></div>`;
+      }
+    }
+    Stats.save();
+    Snd[ok ? 'ok' : 'bad']();
+    const quizLine = this.qN > 0
+      ? `<div class="rline"><span>Quiz sorpresa</span><b>${this.qOk} de ${this.qN}</b></div>` : '';
+    const box = overlay(
+      `<div class="ov-verdict ${ok?'good':'bad'}">${ok ? '¡Clavaste la cuenta!' : 'Casi, pero no'}</div>
+       <div class="rlines">
+         <div class="rline"><span>Tu respuesta</span><b>${fmt(guess)}</b></div>
+         <div class="rline"><span>Cuenta real</span><b>${fmt(this.rc)}</b></div>
+         <div class="rline"><span>Cartas</span><b>${this.shoe.length}</b></div>
+         <div class="rline"><span>Tiempo</span><b>${this.elapsed.toFixed(1)} s (${cps} cartas/s)</b></div>
+         <div class="rline"><span>Miradas a la cuenta</span><b>${this.peeks}</b></div>
+         ${quizLine}${bestLine}
+       </div>
+       <div class="row">
+         <button class="btn teal" type="button" id="ov-again">Otra vez</button>
+         <button class="btn dark" type="button" id="ov-menu">Menú</button>
+       </div>`
+    );
+    box.querySelector('#ov-again').onclick = () => { Snd.click(); closeOverlay(); this.begin(this.cfg, this.auto); };
+    box.querySelector('#ov-menu').onclick = () => { Snd.click(); closeOverlay(); go('menu'); };
+  }
+};
+
+$('#btn-drill-start').addEventListener('click', () => { Snd.click(); Game.begin(CFGS.drill, true); });
+$('#btn-cd-start').addEventListener('click', () => { Snd.click(); Game.begin(CFGS.cd, false); });
+$('#btn-quit').addEventListener('click', () => { Snd.click(); Game.quit(); });
+$('#btn-pause').addEventListener('click', () => { Snd.click(); Game.togglePause(); });
+$('#btn-peek').addEventListener('click', () => Game.peek());
+$('#stage-zone').addEventListener('click', () => {
+  if(State.screen === 'play' && !Game.auto && !Game.over) Game.deal();
+});
+
+/* ==================== CUENTA VERDADERA ==================== */
+function genTC(){
+  for(let i=0; i<300; i++){
+    const d = pick([0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,6]);
+    const tc = rnd(13) - 6;
+    const rc = tc * d;
+    if(!Number.isInteger(rc)) continue;
+    if(Math.abs(rc) > 20) continue;
+    if(tc === 0 && Math.random() < 0.7) continue;
+    return {d, tc, rc};
+  }
+  return {d:2, tc:2, rc:4};
+}
+function makeOpts(tc){
+  const set = new Set([tc]);
+  let guard = 0;
+  while(set.size < 4 && guard++ < 60) set.add(tc + pick([-3,-2,-1,1,2,3]));
+  let d = 1;
+  while(set.size < 4){ set.add(tc + d); if(set.size < 4) set.add(tc - d); d++; }
+  return shuffleArr([...set]);
+}
+function fmtDecks(d){ return Number.isInteger(d) ? String(d) : d.toFixed(1); }
+
+const TC = {
+  score:0, streak:0, cur:null, lock:false,
+  start(){ this.score = 0; this.streak = 0; this.upd(); this.next(); go('tc'); },
+  next(){
+    this.lock = false;
+    const p = genTC();
+    this.cur = p;
+    $('#tc-rc').textContent = fmt(p.rc);
+    $('#tc-decks').textContent = fmtDecks(p.d) + (p.d === 1 ? ' mazo' : ' mazos');
+    const viz = $('#tc-deckviz');
+    viz.innerHTML = '';
+    for(let i=0; i<Math.floor(p.d); i++){
+      const m = document.createElement('div'); m.className = 'mini-deck'; viz.appendChild(m);
+    }
+    if(p.d % 1 !== 0){
+      const m = document.createElement('div'); m.className = 'mini-deck half'; viz.appendChild(m);
+    }
+    const opts = makeOpts(p.tc);
+    $$('#tc-opts .opt').forEach((b,i) => {
+      b.textContent = fmt(opts[i]);
+      b.dataset.v = opts[i];
+      b.classList.remove('good','badx');
+      b.disabled = false;
+    });
+  },
+  answer(i){
+    if(this.lock || State.screen !== 'tc') return;
+    const btns = $$('#tc-opts .opt');
+    const b = btns[i];
+    if(!b || b.disabled) return;
+    this.lock = true;
+    btns.forEach(x => x.disabled = true);
+    const v = +b.dataset.v;
+    const ok = v === this.cur.tc;
+    Stats.data.tc.n++;
+    if(ok){
+      Stats.data.tc.ok++;
+      this.score++; this.streak++;
+      if(this.streak > Stats.data.tc.best) Stats.data.tc.best = this.streak;
+      b.classList.add('good');
+    } else {
+      this.streak = 0;
+      b.classList.add('badx');
+      btns.forEach(x => { if(+x.dataset.v === this.cur.tc) x.classList.add('good'); });
+    }
+    Stats.save();
+    Snd[ok ? 'ok' : 'bad']();
+    this.upd();
+    setTimeout(() => { if(State.screen === 'tc') this.next(); }, ok ? 650 : 1500);
+  },
+  upd(){
+    $('#tc-score').textContent = 'Puntos ' + this.score;
+    $('#tc-streak').textContent = 'Racha x' + this.streak;
+  }
+};
+$$('#tc-opts .opt').forEach(b => b.addEventListener('click', () => TC.answer(+b.dataset.i)));
+
+/* ==================== ESTRATEGIA BASICA ==================== */
+/* Tablas: 4 a 8 mazos, la banca se planta con 17 suave (S17), doblar tras dividir permitido, sin rendirse.
+   Columnas: banca 2,3,4,5,6,7,8,9,10,A */
+const RH = s => s.split('');
+const STRAT_H = {};
+for(const t of [5,6,7,8]) STRAT_H[t] = RH('HHHHHHHHHH');
+STRAT_H[9]  = RH('HDDDDHHHHH');
+STRAT_H[10] = RH('DDDDDDDDHH');
+STRAT_H[11] = RH('DDDDDDDDDH');
+STRAT_H[12] = RH('HHSSSHHHHH');
+for(const t of [13,14,15,16]) STRAT_H[t] = RH('SSSSSHHHHH');
+for(const t of [17,18,19,20,21]) STRAT_H[t] = RH('SSSSSSSSSS');
+const STRAT_S = {};
+STRAT_S[13] = STRAT_S[14] = RH('HHHDDHHHHH');
+STRAT_S[15] = STRAT_S[16] = RH('HHDDDHHHHH');
+STRAT_S[17] = RH('HDDDDHHHHH');
+STRAT_S[18] = RH('SDDDDSSHHH');
+STRAT_S[19] = STRAT_S[20] = STRAT_S[21] = RH('SSSSSSSSSS');
+const STRAT_P = {
+  '2':RH('PPPPPPHHHH'), '3':RH('PPPPPPHHHH'), '4':RH('HHHPPHHHHH'),
+  '5':RH('DDDDDDDDHH'), '6':RH('PPPPPHHHHH'), '7':RH('PPPPPPHHHH'),
+  '8':RH('PPPPPPPPPP'), '9':RH('PPPPPSPPSS'), '10':RH('SSSSSSSSSS'),
+  'A':RH('PPPPPPPPPP')
+};
+const ACTION_NAME = {H:'PEDIR', S:'PLANTARSE', D:'DOBLAR', P:'DIVIDIR'};
+
+function twoSuits(){
+  const a = pick(SUITS);
+  let b = pick(SUITS);
+  while(b === a) b = pick(SUITS);
+  return [a, b];
+}
+
+function genHand(){
+  const r = Math.random();
+  const cat = r < 0.42 ? 'hard' : (r < 0.72 ? 'soft' : 'pair');
+  const upV = 2 + rnd(10); /* 2..11, 11 = As */
+  const upRank = upV === 11 ? 'A' : (upV === 10 ? pick(['10','J','Q','K']) : String(upV));
+  const ui = upV === 11 ? 9 : upV - 2;
+  const upLabel = upV === 11 ? 'As' : String(upV);
+  let cards, correct, desc;
+  if(cat === 'hard'){
+    const totals = [5,6,7,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,18,19];
+    const t = pick(totals);
+    const candidates = [];
+    for(let a = Math.max(2, t-10); a <= Math.min(10, t-2); a++){
+      const b2 = t - a;
+      if(b2 >= 2 && b2 <= 10 && a !== b2) candidates.push([a, b2]);
+    }
+    const [c1, c2] = pick(candidates);
+    const rankOf = v => v === 10 ? pick(['10','J','Q','K']) : String(v);
+    cards = [rankOf(c1), rankOf(c2)];
+    correct = STRAT_H[t][ui];
+    desc = t + ' dura';
+  } else if(cat === 'soft'){
+    const x = 2 + rnd(8); /* 2..9 */
+    cards = ['A', String(x)];
+    const total = 11 + x;
+    correct = STRAT_S[total][ui];
+    desc = 'A y ' + x + ' (' + total + ' suave)';
+  } else {
+    const pr = pick(['2','3','4','5','6','7','8','9','10','A']);
+    const shown = pr === '10' ? pick(['10','J','Q','K']) : pr;
+    cards = [shown, shown];
+    correct = STRAT_P[pr][ui];
+    desc = 'par de ' + (pr === 'A' ? 'Ases' : shown);
+  }
+  return {cards, upRank, upLabel, correct, desc, isPair: cat === 'pair'};
+}
+
+const ST = {
+  cur:null, lock:false, streak:0, n:0, ok:0,
+  start(){ this.streak = 0; this.n = 0; this.ok = 0; this.upd(); this.next(); go('strat'); },
+  next(){
+    this.lock = false;
+    const fb = $('#st-feedback');
+    fb.textContent = ''; fb.className = '';
+    const q = genHand();
+    this.cur = q;
+    const dl = $('#st-dealer');
+    dl.innerHTML = '';
+    dl.appendChild(makeCard(q.upRank, pick(SUITS), {small:true, tilt:-4}));
+    dl.appendChild(makeCard('', '', {small:true, back:true, tilt:4, delay:80}));
+    const pl = $('#st-player');
+    pl.innerHTML = '';
+    const suits = twoSuits();
+    q.cards.forEach((r,i) => pl.appendChild(makeCard(r, suits[i], {tilt: i===0 ? -5 : 5, delay:i*90})));
+    $$('#st-actions .btn').forEach(b => {
+      b.disabled = (b.dataset.a === 'P' && !q.isPair);
+    });
+  },
+  act(a){
+    if(this.lock || State.screen !== 'strat' || !this.cur) return;
+    if(a === 'P' && !this.cur.isPair) return;
+    this.lock = true;
+    const ok = a === this.cur.correct;
+    this.n++; if(ok) this.ok++;
+    Stats.data.st.n++;
+    if(ok){
+      Stats.data.st.ok++;
+      this.streak++;
+      if(this.streak > Stats.data.st.best) Stats.data.st.best = this.streak;
+    } else {
+      this.streak = 0;
+    }
+    Stats.save();
+    const fb = $('#st-feedback');
+    if(ok){
+      fb.textContent = '¡Bien! ' + ACTION_NAME[a] + ' es la jugada.';
+      fb.className = 'good';
+    } else {
+      fb.textContent = 'No. Con ' + this.cur.desc + ' contra ' + this.cur.upLabel +
+        ' se juega ' + ACTION_NAME[this.cur.correct] + '.';
+      fb.className = 'bad';
+    }
+    Snd[ok ? 'ok' : 'bad']();
+    this.upd();
+    $$('#st-actions .btn').forEach(b => b.disabled = true);
+    setTimeout(() => { if(State.screen === 'strat') this.next(); }, ok ? 900 : 2100);
+  },
+  upd(){
+    $('#st-score').textContent = 'Aciertos ' + this.ok + '/' + this.n;
+    $('#st-streak').textContent = 'Racha x' + this.streak;
+  }
+};
+$$('#st-actions .btn').forEach(b => b.addEventListener('click', () => ST.act(b.dataset.a)));
+
+/* ==================== TUTORIAL ==================== */
+function tinyCardHTML(rank, suit){
+  return `<div class="card tiny suit-${SUIT_CLASS[suit]}" style="--tilt:${(Math.random()*5-2.5).toFixed(1)}deg">
+    <div class="mid"><b>${rank}</b><span>${suit}</span></div></div>`;
+}
+function tinyRow(pairs){
+  return '<div class="cards">' + pairs.map(p => tinyCardHTML(p[0], p[1])).join('') + '</div>';
+}
+
+const TutPrac = {
+  deck:[], i:0, ok:0, rc:0, done:false, lock:false,
+  start(){
+    this.deck = shuffleArr(buildShoe(1)).slice(0, 10);
+    this.i = 0; this.ok = 0; this.rc = 0; this.done = false; this.lock = false;
+    $$('#tut-body [data-pv]').forEach(b =>
+      b.addEventListener('click', () => this.answer(+b.dataset.pv)));
+    this.show();
+  },
+  show(){
+    const zone = $('#tut-prac-card');
+    if(!zone) return;
+    const c = this.deck[this.i];
+    zone.innerHTML = '';
+    zone.appendChild(makeCard(c.rank, c.suit, {small:true, float:false, tilt:0}));
+    $('#tut-prac-i').textContent = this.i + 1;
+    $('#tut-prac-fb').textContent = '';
+    this.lock = false;
+  },
+  answer(v){
+    if(this.lock || this.done || !$('#tut-prac-card')) return;
+    this.lock = true;
+    const c = this.deck[this.i];
+    const real = SYSTEMS.hilo.vals[c.rank];
+    this.rc += real;
+    const good = v === real;
+    if(good) this.ok++;
+    $('#tut-prac-count').textContent = fmt(this.rc);
+    const fb = $('#tut-prac-fb');
+    const name = c.rank === 'A' ? 'el As' : (['J','Q','K'].includes(c.rank) ? 'la ' + c.rank : 'el ' + c.rank);
+    fb.textContent = (good ? '¡Eso! ' : 'Casi: ') + name + ' vale ' + fmt(real);
+    fb.style.color = good ? 'var(--good)' : 'var(--bad)';
+    Snd[good ? 'ok' : 'bad']();
+    this.i++;
+    if(this.i >= this.deck.length){
+      this.done = true;
+      setTimeout(() => {
+        const zone = $('#tut-prac-card');
+        if(!zone) return;
+        zone.innerHTML = `<div class="ov-verdict ${this.ok >= 8 ? 'good' : 'bad'}" style="font-size:1.6rem">${this.ok} de 10</div>`;
+        const fb2 = $('#tut-prac-fb');
+        fb2.style.color = '';
+        fb2.innerHTML = `La cuenta quedó en <b style="color:#ffd98a">${fmt(this.rc)}</b> &nbsp;
+          <button type="button" class="btn sm teal" id="tut-prac-again">Repetir práctica</button>`;
+        $('#tut-prac-again').addEventListener('click', () => TUT.render());
+      }, 900);
+    } else {
+      setTimeout(() => { if(State.screen === 'tut') this.show(); }, 800);
+    }
+  }
+};
+
+const TUT = {
+  step: 0,
+  PRAC_STEP: 2, /* indice del paso interactivo */
+  steps: [
+    { title:'El truco del blackjack', html(){ return `
+      <p>El blackjack es el único juego del casino con <b>memoria</b>: las cartas que ya salieron cambian las probabilidades de las que vienen.</p>
+      <ul>
+        <li>Si al mazo le quedan muchas <b>cartas altas</b> (10, figuras y Ases), la ventaja es tuya: caen más blackjacks (que pagan 3 a 2) y la banca se pasa de 21 más seguido.</li>
+        <li>Si le quedan muchas <b>bajas</b>, la ventaja es de la banca.</li>
+      </ul>
+      <p>Contar cartas <b>no es memorizar el mazo</b>. Es llevar un solo número en la cabeza que te dice si el mazo está caliente o frío. Eso es todo el truco, y se aprende practicando.</p>`; } },
+
+    { title:'Los valores del Hi-Lo', html(){ return `
+      <p>A cada carta que sale le asignas un valor y lo vas sumando. Se llama la <b>cuenta corrida</b>.</p>
+      <div class="valrow">${tinyRow([['2','♥'],['3','♠'],['4','♦'],['5','♣'],['6','♥']])}
+        <span class="valbadge plus">+1</span>
+        <span class="valnote">Bajas: cuando salen, el mazo queda con más altas. Mejora para ti.</span></div>
+      <div class="valrow">${tinyRow([['7','♠'],['8','♦'],['9','♣']])}
+        <span class="valbadge zero">0</span>
+        <span class="valnote">Neutras: ni suman ni restan.</span></div>
+      <div class="valrow">${tinyRow([['10','♥'],['J','♠'],['Q','♦'],['K','♣'],['A','♥']])}
+        <span class="valbadge minus">-1</span>
+        <span class="valnote">Altas: cuando salen, el mazo se enfría.</span></div>
+      <p>Truco mental: la carta que sale <b>ya no está</b> en el mazo. Por eso una baja que sale suma: proporcionalmente quedan más altas para ti. Un mazo completo siempre termina en 0.</p>`; } },
+
+    { title:'Practica aquí mismo', html(){ return `
+      <p>Te muestro <b>10 cartas</b>, una por una. Toca cuánto vale cada una (o usa las teclas 1, 2 y 3). Abajo va la cuenta corrida acumulándose.</p>
+      <div class="prac-zone">
+        <div id="tut-prac-card"></div>
+        <div class="prac-row">
+          <button type="button" class="btn teal" data-pv="1">+1 <small>1</small></button>
+          <button type="button" class="btn dark" data-pv="0">0 <small>2</small></button>
+          <button type="button" class="btn" data-pv="-1">-1 <small>3</small></button>
+        </div>
+        <div id="tut-prac-fb"></div>
+        <div class="prac-count">Cuenta: <span id="tut-prac-count">0</span> · Carta <span id="tut-prac-i">1</span> de 10</div>
+      </div>`; },
+      mount(){ TutPrac.start(); } },
+
+    { title:'La cuenta verdadera', html(){ return `
+      <p>Con varios mazos, la cuenta corrida engaña: un <b>+6</b> repartido entre 3 mazos pesa menos que un <b>+6</b> concentrado en 1 mazo.</p>
+      <p>Por eso se divide: <b>cuenta verdadera = cuenta corrida ÷ mazos que quedan</b>.</p>
+      <div class="tcmp">
+        <div class="tcase"><span class="big">+6 ÷ 3 mazos</span>cuenta verdadera <b>+2</b><br><small>apenas tibio</small></div>
+        <div class="tcase"><span class="big">+6 ÷ 1 mazo</span>cuenta verdadera <b>+6</b><br><small>mazo al rojo vivo</small></div>
+      </div>
+      <p>En la mesa estimas los mazos restantes mirando la pila de descarte. En la app, el modo <b>Cuenta Verdadera ♦</b> te entrena esa división hasta que salga sola.</p>`; } },
+
+    { title:'¿Y de qué me sirve el número?', html(){ return `
+      <p><b>La cuenta decide tu apuesta.</b> Regla simple para empezar:</p>
+      <ul>
+        <li>Cuenta verdadera <b>+2 o más</b>: el mazo te favorece, sube la apuesta.</li>
+        <li>Entre <b>-1 y +1</b>: mazo neutro, apuesta mínima.</li>
+        <li><b>Negativa</b>: manda la banca, apuesta mínima o descansa.</li>
+      </ul>
+      <p>Y ojo: contar no sirve de nada si juegas mal las manos. La <b>estrategia básica</b> es el requisito previo: la jugada matemáticamente correcta para cada mano contra cada carta de la banca, de memoria y sin dudar. El conteo te dice <b>cuánto apostar</b>; la estrategia, <b>cómo jugar</b>.</p>`; } },
+
+    { title:'Tu plan de entrenamiento', html(){ return `
+      <p>Orden recomendado, de cero a contador:</p>
+      <ul>
+        <li><b>1. Estrategia Básica ♣</b>: memoriza las jugadas. Meta: 95% de aciertos.</li>
+        <li><b>2. Countdown ♠</b> con 1 mazo, sin prisa: pasa el mazo entero y termina en 0 siempre. Luego ve por velocidad. Meta clásica: <b>menos de 30 segundos</b>.</li>
+        <li><b>3. Conteo Continuo ♥</b>: 2 mazos o más, quiz sorpresa activado. Sube velocidad y cartas por tirada de a poco.</li>
+        <li><b>4. Cuenta Verdadera ♦</b>: practica la división hasta que sea reflejo.</li>
+      </ul>
+      <p>10 minutos al día rinden mucho más que una sesión larga a la semana. Tus stats y récords quedan guardados en el menú.</p>`; } },
+
+    { title:'Controles', html(){ return `
+      <div class="ctrl-table">
+        <div class="ctrl-row"><span class="kbd">ESPACIO</span><span>Siguiente carta en Countdown · pausa en Conteo Continuo</span></div>
+        <div class="ctrl-row"><span class="kbd">V</span><span>Espiar la cuenta actual (queda anotado como ayuda)</span></div>
+        <div class="ctrl-row"><span class="kbd">1 a 4</span><span>Responder en Cuenta Verdadera y en Estrategia</span></div>
+        <div class="ctrl-row"><span class="kbd">ENTER</span><span>Confirmar cuando escribes la cuenta</span></div>
+        <div class="ctrl-row"><span class="kbd">ESC</span><span>Volver al menú desde donde sea</span></div>
+      </div>
+      <p>Eso es todo. Arranca por <b>Estrategia Básica</b> o tírate directo a un <b>Countdown</b> de 1 mazo tranquilo. ¡Dale!</p>`; } },
+  ],
+  start(){ this.step = 0; this.render(); go('tut'); },
+  render(){
+    const s = this.steps[this.step];
+    $('#tut-body').innerHTML = `<div class="tut-step"><h3>${s.title}</h3>${s.html()}</div>`;
+    if(s.mount) s.mount();
+    $('#tut-dots').innerHTML = this.steps.map((_, i) =>
+      `<div class="dot${i === this.step ? ' on' : ''}" data-i="${i}"></div>`).join('');
+    $('#tut-prev').disabled = this.step === 0;
+    $('#tut-next').textContent = this.step === this.steps.length - 1 ? '¡A jugar!' : 'Siguiente';
+  },
+  next(){
+    Snd.click();
+    if(this.step >= this.steps.length - 1){ go('menu'); return; }
+    this.step++; this.render();
+  },
+  prev(){
+    if(this.step === 0) return;
+    Snd.click();
+    this.step--; this.render();
+  }
+};
+$('#tut-prev').addEventListener('click', () => TUT.prev());
+$('#tut-next').addEventListener('click', () => TUT.next());
+$('#tut-dots').addEventListener('click', e => {
+  const d = e.target.closest('.dot');
+  if(d){ TUT.step = +d.dataset.i; TUT.render(); Snd.click(); }
+});
+
+/* ==================== TECLADO ==================== */
+document.addEventListener('keydown', e => {
+  if($('#overlay').classList.contains('show')){
+    /* con overlay abierto, Escape permite salir al menu igual */
+    if(e.key === 'Escape' && State.screen === 'play') Game.quit();
+    return;
+  }
+  if(State.screen === 'play'){
+    if(e.code === 'Space'){
+      e.preventDefault();
+      if(!Game.auto) Game.deal();
+      else Game.togglePause();
+    }
+    else if(e.key === 'v' || e.key === 'V') Game.peek();
+    else if(e.key === 'Escape') Game.quit();
+  }
+  else if(State.screen === 'tut'){
+    if(TUT.step === TUT.PRAC_STEP && e.key >= '1' && e.key <= '3')
+      TutPrac.answer([1, 0, -1][+e.key - 1]);
+    else if(e.key === 'ArrowRight') TUT.next();
+    else if(e.key === 'ArrowLeft') TUT.prev();
+    else if(e.key === 'Escape') go('menu');
+  }
+  else if(State.screen === 'tc'){
+    if(e.key >= '1' && e.key <= '4') TC.answer(+e.key - 1);
+    else if(e.key === 'Escape') go('menu');
+  }
+  else if(State.screen === 'strat'){
+    const map = {'1':'H','2':'S','3':'D','4':'P'};
+    if(map[e.key]) ST.act(map[e.key]);
+    else if(e.key === 'Escape') go('menu');
+  }
+  else if(e.key === 'Escape' && State.screen !== 'menu'){
+    go('menu');
+  }
+});
+
+/* ==================== FONDO PSICODELICO ==================== */
+(function(){
+  const cv = document.getElementById('bg');
+  const ctx = cv.getContext('2d', {alpha:false});
+  const W = 192, H = 108;
+  cv.width = W; cv.height = H;
+  const id = ctx.createImageData(W, H);
+  const px = id.data;
+  const PAL = ['#140a2e','#1e2a6e','#3b2f8f','#7c2a72','#cf3b4e','#f0913c']
+    .map(h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]);
+  const NP = PAL.length;
+  let t = 0, last = 0;
+  function paint(){
+    let i = 0;
+    for(let y = 0; y < H; y++){
+      const v = y/H - 0.5;
+      for(let x = 0; x < W; x++){
+        const u = (x/W - 0.5) * 1.78;
+        const r = Math.sqrt(u*u + v*v);
+        const a = Math.atan2(v, u);
+        let m = Math.sin(a*2 + r*7.5 - t*1.05)
+              + 0.8*Math.sin(a*4 - r*11 + t*0.55)
+              + 0.5*Math.sin(u*5.7 + t*0.75)*Math.cos(v*6.4 - t*0.4);
+        m += ((x*7 + y*13) % 5 - 2) * 0.05;
+        let k = Math.floor((m + 2.45) / 4.9 * NP);
+        if(k < 0) k = 0; else if(k >= NP) k = NP - 1;
+        const c = PAL[k];
+        px[i++] = c[0]; px[i++] = c[1]; px[i++] = c[2]; px[i++] = 255;
+      }
+    }
+    ctx.putImageData(id, 0, 0);
+  }
+  paint();
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    (function loop(now){
+      requestAnimationFrame(loop);
+      if(now - last < 40) return;
+      last = now; t += 0.045;
+      paint();
+    })(0);
+  }
+})();
+
+/* ==================== ARRANQUE ==================== */
+updSndBtns();
+renderMenuStats();
+go('menu');
+</script>
+<script>
+/* instalable en el celular: solo cuando se sirve por https; abierta como archivo en la PC no hace falta */
+if (location.protocol === 'https:') {
+  const mf = document.createElement('link');
+  mf.rel = 'manifest';
+  mf.href = 'manifest.webmanifest';
+  document.head.appendChild(mf);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+}
+</script>
+</body>
+</html>
